@@ -1,0 +1,7 @@
+pip-tools
+ruff
+black
+pytest
+pytest-cov
+requests
+httpx

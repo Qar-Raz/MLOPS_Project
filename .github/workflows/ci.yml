@@ -1,0 +1,39 @@
+name: CI Pipeline
+
+# Triggers the workflow on push or pull request events for the main branch
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Sets up a Python environment
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    # Installs development dependencies from the locked file
+    - name: Install dependencies
+      run: pip install -r requirements-dev.txt
+
+    # Lints the code with ruff for style and errors
+    - name: Lint with ruff
+      run: ruff check .
+
+    # Checks code formatting with black
+    - name: Format with black
+      run: black --check .
+
+    # Runs tests with pytest and enforces a minimum of 80% test coverage
+    - name: Test with pytest
+      run: pytest --cov=src --cov-fail-under=80
