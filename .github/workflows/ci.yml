@@ -24,7 +24,7 @@ jobs:
 
     # Installs development dependencies from the locked file
     - name: Install dependencies
-      run: pip install -r requirements-dev.txt
+      run: pip install -r requirements.txt -r requirements-dev.txt
 
     # Lints the code with ruff for style and errors
     - name: Lint with ruff
