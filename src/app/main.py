@@ -6,10 +6,12 @@ app = FastAPI(
     version="0.1.0",
 )
 
+
 @app.get("/", tags=["General"])
 def read_root():
     """A general endpoint that returns a welcome message."""
     return {"message": "Welcome to our MLOps API!"}
+
 
 @app.get("/health", tags=["General"])
 def health_check():
