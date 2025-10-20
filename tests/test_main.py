@@ -3,6 +3,7 @@ from src.app.main import app
 
 client = TestClient(app)
 
+
 def test_health_check():
     """Tests the /health endpoint to ensure it returns 200 OK."""
     response = client.get("/health")

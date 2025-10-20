@@ -5,3 +5,5 @@ pytest
 pytest-cov
 requests
 httpx
+pre-commit
+detect-secrets
