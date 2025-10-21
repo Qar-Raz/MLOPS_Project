@@ -7,3 +7,4 @@ requests
 httpx
 pre-commit
 detect-secrets
+requests
