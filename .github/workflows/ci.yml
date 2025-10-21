@@ -1,6 +1,5 @@
-name: CI Pipeline
+name: CI/CD Pipeline
 
-# Triggers the workflow on push or pull request events for the main branch
 on:
   push:
     branches: [ main ]
@@ -11,29 +10,60 @@ jobs:
   lint-and-test:
     runs-on: ubuntu-latest
     steps:
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - name: Install dependencies
+        run: pip install -r requirements.txt -r requirements-dev.txt
+      - name: Lint with ruff
+        run: ruff check .
+      - name: Format with black
+        run: black --check .
+      - name: Test with pytest
+        run: pytest --cov=src --cov-fail-under=80
 
-    # Sets up a Python environment
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-        cache: 'pip'
+  build-and-deploy:
+    # This job only runs if lint-and-test succeeds
+    needs: lint-and-test
+    # This job only runs on pushes to the main branch, not on PRs
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
-    # Installs development dependencies from the locked file
-    - name: Install dependencies
-      run: pip install -r requirements.txt -r requirements-dev.txt
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    # Lints the code with ruff for style and errors
-    - name: Lint with ruff
-      run: ruff check .
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-    # Checks code formatting with black
-    - name: Format with black
-      run: black --check .
+      - name: (c) Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository }}:${{ github.sha }}
 
-    # Runs tests with pytest and enforces a minimum of 80% test coverage
-    - name: Test with pytest
-      run: pytest --cov=src --cov-fail-under=80
+      - name: (d) Canary Deploy
+        run: |
+          docker run -d --name canary -p 8080:8000 \
+            -e CANARY=true \
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
+          echo "Canary container started."
+
+      - name: (e) Run Acceptance Tests
+        run: |
+          # Install requests to run the test script
+          pip install requests
+          # Run the test script
+          python acceptance_test.py
