@@ -75,4 +75,4 @@ jobs:
           # Install requests to run the test script
           pip install requests
           # Run the test script
-          python tests/acceptance_test.py
+          python tests/acceptance_tests.py
