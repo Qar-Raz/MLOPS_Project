@@ -12,17 +12,22 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
           cache: 'pip'
+
       - name: Install dependencies
         run: pip install -r requirements.txt -r requirements-dev.txt
+
       - name: Lint with ruff
         run: ruff check .
+
       - name: Format with black
         run: black --check .
+
       - name: Test with pytest
         run: pytest --cov=src --cov-fail-under=80
 
@@ -47,18 +52,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set image name to lowercase
+        id: string
+        run: echo "repo_lc=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
       - name: (c) Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          tags: ghcr.io/${{ steps.string.outputs.repo_lc }}:${{ github.sha }}
 
       - name: (d) Canary Deploy
         run: |
           docker run -d --name canary -p 8080:8000 \
             -e CANARY=true \
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ghcr.io/${{ steps.string.outputs.repo_lc }}:${{ github.sha }}
           echo "Canary container started."
 
       - name: (e) Run Acceptance Tests
