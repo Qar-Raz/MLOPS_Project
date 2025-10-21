@@ -11,8 +11,6 @@ RUN pip install pip-tools
 COPY requirements.in requirements.txt ./
 
 # Install dependencies from the locked file.
-# Using 'pip-sync' is better than 'pip install -r' because it ensures
-# that ONLY the packages in the file exist, creating a clean environment.
 RUN pip-sync requirements.txt
 
 # ---- Final Stage ----
@@ -26,6 +24,9 @@ WORKDIR /home/appuser/app
 
 # Copy installed Python packages from the builder stage
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+
+# Copy Python executables from the builder stage (like uvicorn)
+COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy the application source code
 COPY ./src/app/ ./app/
