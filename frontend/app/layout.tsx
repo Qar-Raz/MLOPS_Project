@@ -25,11 +25,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       {/*
-        THE FIX IS HERE:
-        We are adding 'bg-black' and 'text-white' to your existing list of classes.
+        Background color: bg-gray-950 (dark gray shade instead of pure black)
       */}
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black text-white`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-950 text-white`}
+        suppressHydrationWarning
       >
         {children}
       </body>
