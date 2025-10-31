@@ -1,6 +1,23 @@
 version: "3.8"
-
 services:
+  floracare-api:
+    build: .
+    image: floracare-api:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - S3_BUCKET_NAME=mlopsmodel
+      - S3_MODEL_KEY=floracare_model_fast.pth
+      - MODEL_PATH=/tmp/floracare_model_fast.pth
+      - AWS_REGION=us-east-1   # optional
+      - NUM_CLASSES=38
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   app:
     build:
       context: .
