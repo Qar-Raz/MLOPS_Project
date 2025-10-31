@@ -1,0 +1,12 @@
+global:
+  scrape_interval: 5s  # scrape every 5 seconds
+
+scrape_configs:
+  - job_name: "smarttagger_app"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["app:8000"]
+
+  - job_name: "prometheus_self"
+    static_configs:
+      - targets: ["prometheus:9090"]
