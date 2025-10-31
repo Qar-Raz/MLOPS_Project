@@ -10,7 +10,7 @@ anyio==4.11.0
     # via
     #   starlette
     #   watchfiles
-click==8.1.8
+click>=8.1.8,<8.4
     # via uvicorn
 colorama==0.4.6
     # via
