@@ -15,16 +15,20 @@ app = FastAPI(
     version="0.1.0",
 )
 
+
 class PredictRequest(BaseModel):
     text: str
+
 
 @app.get("/", tags=["General"])
 def read_root():
     return {"message": "Welcome to our MLOps API!"}
 
+
 @app.get("/health", tags=["General"])
 def health_check():
     return {"status": "ok"}
+
 
 @app.get("/metrics", tags=["Monitoring"])
 def metrics_endpoint():
@@ -36,6 +40,7 @@ def metrics_endpoint():
     """
     body, content_type = export_metrics()
     return Response(content=body, media_type=content_type)
+
 
 @app.post("/predict", tags=["Model"])
 async def predict(req: PredictRequest, request: Request):
@@ -52,7 +57,11 @@ async def predict(req: PredictRequest, request: Request):
 
         # STUB LOGIC (replace with real model):
         # this dummy sentiment logic is just to let you test metrics.
-        if "love" in text.lower() or "great" in text.lower() or "awesome" in text.lower():
+        if (
+            "love" in text.lower()
+            or "great" in text.lower()
+            or "awesome" in text.lower()
+        ):
             predicted_label = "POSITIVE"
         else:
             predicted_label = "NEUTRAL"

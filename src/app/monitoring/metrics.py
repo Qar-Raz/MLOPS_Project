@@ -48,6 +48,7 @@ TOKENS_TOTAL = Counter(
 # Helper functions
 # -------------
 
+
 def export_metrics():
     """
     Returns (body_bytes, content_type) for the /metrics endpoint.
@@ -81,7 +82,11 @@ async def track_prediction(
 
     try:
         # run the actual model logic
-        result = await infer_fn() if callable(infer_fn) and infer_fn.__code__.co_flags & 0x80 else infer_fn()
+        result = (
+            await infer_fn()
+            if callable(infer_fn) and infer_fn.__code__.co_flags & 0x80
+            else infer_fn()
+        )
 
         # After inference, update request count and tokens used
         REQUEST_COUNT.inc()
