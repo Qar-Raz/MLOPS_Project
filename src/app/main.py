@@ -21,9 +21,7 @@ from src.app.monitoring.metrics import (
     TOKENS_TOTAL,
 )
 
-# =====================================================
 # 1. FASTAPI APP METADATA
-# =====================================================
 
 app = FastAPI(
     title="MLOps Project API",
