@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: smarttagger_app
+    command: uvicorn src.app.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    # Make sure your Dockerfile copies src/, installs deps, etc.
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=200h
+    # This matches how most tutorials run Prometheus in compose and mount a prometheus.yml. :contentReference[oaicite:10]{index=10}
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    # Running Grafana via docker-compose with Prometheus as the datasource
+    # is straight out of current Grafana/Prometheus Docker guides. :contentReference[oaicite:11]{index=11}
+
+volumes:
+  prometheus_data: {}
+  grafana_data: {}
