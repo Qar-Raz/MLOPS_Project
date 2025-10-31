@@ -169,6 +169,10 @@ aws s3 cp s3://mlopsmodel/model.pkl ./models/
 
 ---
 
+### DATASET USED FROM KAGGLE
+## 38 CLASSES OF DIFFERENT PLANTS HEALTH
+https://www.kaggle.com/datasets/vipoooool/new-plant-diseases-dataset
+
 ### 6. Running the Application
 
 #### Start Uvicorn Server with Auto-Reload
@@ -570,7 +574,7 @@ pkill -f uvicorn
 
 ## 🙏 Acknowledgments
 
-- Dataset provided by PlantVillage
+- Dataset provided by PlantVillage (LINK ATTACHED ABOVE)
 - AWS Free Tier for hosting
 - Evidently AI for monitoring tools
 - FastAPI framework documentation
