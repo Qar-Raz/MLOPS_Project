@@ -10,7 +10,7 @@ anyio==4.11.0
     # via
     #   starlette
     #   watchfiles
-click==8.3.0
+click==8.1.8
     # via uvicorn
 colorama==0.4.6
     # via
@@ -52,3 +52,7 @@ watchfiles==1.1.1
     # via uvicorn
 websockets==15.0.1
     # via uvicorn
+boto3==1.28.45
+    # via
+    #   s3transfer
+    
