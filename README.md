@@ -270,6 +270,10 @@ grafana:
     - prometheus
 ```
 
+![1 docker-compose](https://github.com/user-attachments/assets/0a337d3c-ecc0-4c9e-986c-7d6623344b68)
+
+
+
 #### Prometheus metrics from FastAPI
 - Created the FastAPI app.
 - Loaded the trained PyTorch ResNet18 model (38 plant disease classes).
@@ -283,9 +287,14 @@ grafana:
   metrics_app = make_asgi_app()
   app.mount("/metrics", metrics_app)
   ```
+<img width="1362" height="686" alt="image" src="https://github.com/user-attachments/assets/ce5191ef-2c4e-416a-8751-2d3b4e4c551a" />
+
 
 Prometheus scrapes our app at app:8000/metrics every 5s. 
 app is the service name from Docker Compose, so Prometheus can reach it over the Compose network instead of localhost. This is how you're supposed to wire Prometheus ↔ FastAPI in Docker.
+
+<img width="648" height="558" alt="prometheus ss" src="https://github.com/user-attachments/assets/7c81e900-62cb-455a-893b-84ba6ab190dc" />
+
 
 #### Grafana Setup
 1. Open Grafana (port 3000 from Docker / Codespaces). 
@@ -304,6 +313,9 @@ Once the data source is connected, we create panels that query our FastAPI metri
 - Request rate / throughput (calls/sec)
 - tokens_per_call (request cost / size)
 This is the normal Prometheus → Grafana workflow: Prometheus scrapes our FastAPI /metrics, then Grafana queries Prometheus and plots those time series.
+
+![grafana connection](https://github.com/user-attachments/assets/1efe91c4-6699-4088-98ae-70dad97a1190)
+
 
 #### Docker-compose to bring it all together
 - app runs the FastAPI model server with Uvicorn on 0.0.0.0:8000 so other containers can reach it (this is required in Docker). 
@@ -327,6 +339,9 @@ docker compose up --build
 - Preprocesses the uploaded leaf image (resize / crop / normalize like during training), runs inference, and returns predicted class and confidence.
 - Adds our request timing middleware (imported from `instrumentation.py`) so every request is measured.
 - Publishes an internal metrics endpoint that the rest of the monitoring stack uses.
+- 
+![main running in real time thru univcorn command](https://github.com/user-attachments/assets/8d4eb049-81c5-4ed2-923b-bb6abe1cb10c)
+
 
 #### API routes exposed
 - `/`  
