@@ -10,7 +10,7 @@ from prometheus_client import (
 )
 
 # -------------
-# Core metrics
+# Core metrics here
 # -------------
 
 # Total number of inference requests (your /predict calls).
