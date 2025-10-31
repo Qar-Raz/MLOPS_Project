@@ -8,6 +8,12 @@ Application to detect plant diseases with MLOps best practices
 
 This project demonstrates a complete MLOps pipeline for plant disease detection, deployed on AWS infrastructure with real-time prediction capabilities.
 
+This project delivers:
+- A FastAPI inference service that serves a PyTorch model
+- Prometheus metrics (latency, request cost, health)
+- Grafana dashboards to visualize service behavior
+- Docker Compose to run everything together
+
 ---
 
 ## 📦 Architecture Overview
@@ -17,6 +23,8 @@ The application uses:
 - **AWS EC2** - For hosting the prediction API
 - **Docker** - For containerization
 - **Uvicorn** - For serving the FastAPI application
+- **Prometheus** - For scraping metrics and storing them in time-series DB
+- **Grafana** - Connects to Prometheus as a data source
 - **Evidently AI** - For monitoring data drift and model performance
 
 ---
@@ -236,7 +244,7 @@ The `--reload` flag ensures that any code changes are automatically detected and
 
 ---
 
-### 8. Monitoring and Health Checks
+## Monitoring and Health Checks
 
 #### Health Check Endpoint Implementation
 
@@ -245,6 +253,100 @@ The `--reload` flag ensures that any code changes are automatically detected and
 async def health_check():
     return {"status": "ok"}
 ```
+
+#### Connecting FastAPI with Grafana
+##### How Grafana is run
+Grafana is defined as a service in `docker-compose.yml`:
+```yaml
+grafana:
+  image: grafana/grafana:latest
+  container_name: grafana
+  environment:
+    - GF_SECURITY_ADMIN_USER=admin
+    - GF_SECURITY_ADMIN_PASSWORD=admin123
+  ports:
+    - "3000:3000"
+  depends_on:
+    - prometheus
+```
+
+#### Prometheus metrics from FastAPI
+- Created the FastAPI app.
+- Loaded the trained PyTorch ResNet18 model (38 plant disease classes).
+- Endpoints:
+  - `/` → welcome message.
+  - `/health` → returns `{"status":"ok"}` for health checks.
+  - `/predict` → accepts an uploaded plant leaf image, runs inference, returns predicted class + confidence.
+- **Mounted `/metrics`** using Prometheus’ official `make_asgi_app()`:
+  ```python
+  from prometheus_client import make_asgi_app
+  metrics_app = make_asgi_app()
+  app.mount("/metrics", metrics_app)
+  ```
+
+Prometheus scrapes our app at app:8000/metrics every 5s. 
+app is the service name from Docker Compose, so Prometheus can reach it over the Compose network instead of localhost. This is how you're supposed to wire Prometheus ↔ FastAPI in Docker.
+
+#### Grafana Setup
+1. Open Grafana (port 3000 from Docker / Codespaces). 
+2. Log in with the admin credentials from docker-compose.yml. 
+3. Add Prometheus as a data source:
+- Connections → Add new data source → Prometheus
+- URL: http://prometheus:9090
+- Save & Test
+Using the service name prometheus:9090 (not localhost) is the correct way when Grafana and Prometheus run in Docker Compose. 
+4. Create dashboards:
+- Add a panel
+- Query our metrics (request latency histogram, tokens_per_call, etc.)
+
+Once the data source is connected, we create panels that query our FastAPI metrics exposed at /metrics:
+- Request latency histogram (p95 per endpoint)
+- Request rate / throughput (calls/sec)
+- tokens_per_call (request cost / size)
+This is the normal Prometheus → Grafana workflow: Prometheus scrapes our FastAPI /metrics, then Grafana queries Prometheus and plots those time series.
+
+#### Docker-compose to bring it all together
+- app runs the FastAPI model server with Uvicorn on 0.0.0.0:8000 so other containers can reach it (this is required in Docker). 
+- prometheus scrapes app.
+- grafana connects to Prometheus.
+
+-To run the setup,
+```bash
+docker compose down
+docker compose up --build
+```
+
+### "main.py" Implementation
+
+`main.py` is the core API service for the plant disease classifier.
+
+#### What it’s responsible for
+- Starts a FastAPI app instance that serves our model. FastAPI is an async web framework built on Starlette and Pydantic that’s commonly used to deploy ML inference because it’s lightweight and gives async I/O performance. :contentReference[oaicite:0]{index=0}
+- Loads the trained PyTorch model (ResNet18 fine-tuned on 38 plant disease classes) and keeps it in memory so inference is fast.
+- Reads `class_names.txt` to map model output indices → readable disease labels.
+- Preprocesses the uploaded leaf image (resize / crop / normalize like during training), runs inference, and returns predicted class and confidence.
+- Adds our request timing middleware (imported from `instrumentation.py`) so every request is measured.
+- Publishes an internal metrics endpoint that the rest of the monitoring stack uses.
+
+#### API routes exposed
+- `/`  
+  Basic welcome message to confirm the service is running.
+- `/health`  
+  Liveness check used by Docker and by us manually. It returns a short JSON like `{"status":"ok"}` so we can prove the container is healthy.
+- `/predict`  
+  This is the main inference route. You upload a plant leaf image, the model runs, and you get back the predicted disease + confidence score.
+- `/docs`  
+  FastAPI automatically generates interactive Swagger UI at `/docs`. You can call `/predict` from the browser, send an image, and see the model output immediately with no extra tooling. FastAPI ships this behavior by default using OpenAPI and Swagger UI. :contentReference[oaicite:1]{index=1}
+
+#### How we run it
+We don’t execute `python src/app/main.py` directly.  
+Instead we launch the app using Uvicorn from the project root:
+
+```bash
+uvicorn src.app.main:app --host 0.0.0.0 --port 8000
+```
+
+This syntax (module_path:app_object) is the documented way to serve FastAPI. Uvicorn imports the app object from that module and exposes it as an ASGI server, which is how FastAPI is normally deployed.
 
 #### Real-Time Monitoring Response
 
